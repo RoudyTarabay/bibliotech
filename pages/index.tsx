@@ -13,34 +13,41 @@ declare global {
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {},
-    fbLogin: {
-      background: "#3B5998",
-    },
+
     wrapper: {
       minHeight: "100vh",
       display: "flex",
       alignItems: "center",
     },
     form: {
-      marginTop: theme.spacing(5),
+      marginTop: theme.spacing(3),
       "& .MuiTextField-root": {},
     },
 
     paper: {
-      paddingTop: "50px",
-      paddingBottom: "50px",
+      paddingTop: theme.spacing(3),
+      paddingBottom: theme.spacing(3),
+      paddingLeft: theme.spacing(4),
+      paddingRight: theme.spacing(4),
       textAlign: "center",
       margin: theme.spacing(5),
       "& .MuiTextField-root": {
-        margin: theme.spacing(1),
-        width: "80%",
+        marginTop: theme.spacing(2),
+        marginBottm: theme.spacing(2),
+        width: "100%",
       },
       "& .MuiButton-root": {
-        margin: theme.spacing(1),
-        width: "80%",
+        marginTop: theme.spacing(2),
+        marginBottm: theme.spacing(2),
+        width: "100%",
         height: "56px",
         textTransform: "none",
         color: "white",
+      },
+      "& .facebook-login": {
+        background: "#3B5998",
+        marginTop: theme.spacing(4),
+        marginBottom: theme.spacing(4),
       },
     },
     logo: {
@@ -48,11 +55,12 @@ const useStyles = makeStyles((theme: Theme) =>
       width: "30%",
       height: "auto",
       margin: "auto",
-      marginBottom: theme.spacing(5),
+      marginBottom: theme.spacing(2),
     },
   })
 );
 const _initFB = () => {
+  //initialize facebook sdk
   window.fbAsyncInit = () => {
     window.FB.init({
       appId: "166017921403938",
@@ -75,7 +83,22 @@ const _initFB = () => {
     fjs.parentNode.insertBefore(js, fjs);
   })(document, "script", "facebook-jssdk");
 };
-
+const loginToFb = () => {
+  window.FB.login(function (response) {
+    if (response.status === "connected") {
+      console.log("connected");
+      // Logged into your webpage and Facebook.
+    } else {
+      console.log("not connected");
+      // The person is not logged into your webpage or we are unable to tell.
+    }
+  });
+  //launches facebook login dialog
+};
+// const isLoggedIn=()=>{//checks if the user is already logged in
+//   window.FB.getLoginStatus(function(response) {
+//   }
+// }
 export default function SignUp() {
   useEffect(() => {
     _initFB();
@@ -88,7 +111,20 @@ export default function SignUp() {
       <Container className={classes.root} maxWidth="sm">
         <Paper elevation={3} className={classes.paper}>
           <Logo className={classes.logo} />
-          <Typography variant="h3">Sign Up</Typography>
+          <Typography variant="subtitle2">
+            Join a community of avid readers to exchange and trade books
+          </Typography>
+          <div>
+            <Button
+              onClick={loginToFb}
+              variant="contained"
+              className="facebook-login"
+              startIcon={<Facebook width="24px" height="24px" fill="white" />}
+            >
+              Continue with Facebook
+            </Button>
+          </div>
+          <Typography variant="subtitle2">OR</Typography>
           <form className={classes.form}>
             <div>
               <TextField id="email" label="Email" variant="outlined" />
@@ -104,19 +140,9 @@ export default function SignUp() {
               />
             </div>
             <Button variant="contained" color="primary">
-              Submit
+              Sign Up
             </Button>
           </form>
-        </Paper>
-        <Paper elevation={3} className={classes.paper}>
-          <Button
-            color="primary"
-            variant="contained"
-            className={classes.fbLogin}
-            startIcon={<Facebook width="24px" height="24px" fill="white" />}
-          >
-            Continue with Facebook
-          </Button>
         </Paper>
       </Container>
     </div>
