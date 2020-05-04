@@ -1,9 +1,15 @@
-import { TextField, Container, Paper } from "@material-ui/core";
+import {
+  TextField,
+  Container,
+  Paper,
+  createGenerateClassName,
+} from "@material-ui/core";
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Logo, Facebook } from "../components/Icons";
 import { Typography, Button } from "@material-ui/core";
 import { useState, useEffect } from "react";
 import classes from "*.module.css";
+// import theme from "../hooks/theme";
 declare global {
   interface Window {
     FB: any;
@@ -44,7 +50,7 @@ const useStyles = makeStyles((theme: Theme) =>
         textTransform: "none",
         color: "white",
       },
-      "& .facebook-login": {
+      "& .fbLogin": {
         background: "#3B5998",
         marginTop: theme.spacing(4),
         marginBottom: theme.spacing(4),
@@ -59,6 +65,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
   })
 );
+// const theme = theme();
 const _initFB = () => {
   //initialize facebook sdk
   window.fbAsyncInit = () => {
@@ -118,7 +125,7 @@ export default function SignUp() {
             <Button
               onClick={loginToFb}
               variant="contained"
-              className="facebook-login"
+              className="fbLogin"
               startIcon={<Facebook width="24px" height="24px" fill="white" />}
             >
               Continue with Facebook
