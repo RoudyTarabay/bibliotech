@@ -8,6 +8,12 @@ import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Logo, Facebook } from "../components/Icons";
 import { Typography, Button } from "@material-ui/core";
 import { useState, useEffect } from "react";
+import { useQuery } from "@apollo/react-hooks";
+import gql from "graphql-tag";
+import { useApolloClient, useMutation } from "@apollo/react-hooks";
+
+import * as Types from "../src/generated/graphql";
+
 import classes from "*.module.css";
 // import theme from "../hooks/theme";
 declare global {
@@ -16,6 +22,7 @@ declare global {
     fbAsyncInit: any;
   }
 }
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {},
@@ -90,6 +97,20 @@ const _initFB = () => {
     fjs.parentNode.insertBefore(js, fjs);
   })(document, "script", "facebook-jssdk");
 };
+
+const SIGNUP = gql`
+  query signup($email: String, $password: String, $cpassword: string) {
+    registerUser(email: $email, passowrd: $password, cpassword: $cpassword) {
+      success
+      message
+    }
+  }
+`;
+export const LOGIN_USER = gql`
+  mutation login($email: String!, $password: String!) {
+    login(email: $email, password: $password)
+  }
+`;
 const loginToFb = () => {
   window.FB.login(function (response) {
     if (response.status === "connected") {
@@ -110,6 +131,9 @@ export default function SignUp() {
   useEffect(() => {
     _initFB();
   }, []);
+  const [login, { data }] = useMutation<Types.login, Types.loginVariables>(
+    LOGIN_USER
+  );
 
   const classes = useStyles();
 

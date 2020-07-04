@@ -2,6 +2,8 @@ import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { ThemeProvider } from "@material-ui/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import { AppProps } from "next/app";
+import fetch from "node-fetch";
+
 import "typeface-roboto";
 import indigo from "@material-ui/core/colors/indigo";
 import red from "@material-ui/core/colors/red";
@@ -9,6 +11,10 @@ import Head from "next/head";
 import React from "react";
 import { createMuiTheme } from "@material-ui/core/styles";
 
+import { ApolloClient } from "apollo-client";
+import { InMemoryCache, NormalizedCacheObject } from "apollo-cache-inmemory";
+import { createHttpLink } from "apollo-link-http";
+import { ApolloProvider } from "@apollo/react-hooks";
 function MyApp({ Component, pageProps }: AppProps) {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const theme = createMuiTheme({
@@ -18,7 +24,15 @@ function MyApp({ Component, pageProps }: AppProps) {
       secondary: red,
     },
   });
-
+  const cache = new InMemoryCache();
+  const link = createHttpLink({
+    uri: "http://localhost:4000/",
+    fetch: fetch,
+  });
+  const client: ApolloClient<NormalizedCacheObject> = new ApolloClient({
+    cache,
+    link,
+  });
   React.useEffect(() => {
     // Remove the server-side injected CSS.
     const jssStyles = document.querySelector("#jss-server-side");
@@ -36,17 +50,19 @@ function MyApp({ Component, pageProps }: AppProps) {
           content="minimum-scale=1, initial-scale=1, width=device-width"
         />
       </Head>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Component {...pageProps} />
-        <style global jsx>{`
-           {
-            body {
-              min-height: 100vh;
+      <ApolloProvider client={client}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Component {...pageProps} />
+          <style global jsx>{`
+             {
+              body {
+                min-height: 100vh;
+              }
             }
-          }
-        `}</style>
-      </ThemeProvider>
+          `}</style>
+        </ThemeProvider>
+      </ApolloProvider>
     </React.Fragment>
   );
 }
