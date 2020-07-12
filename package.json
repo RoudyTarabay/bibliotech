@@ -1,13 +1,18 @@
 {
-  "name": "bibliotheque",
+  "name": "bibliotech",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "codegen": "graphql-codegen --config codegen.yml"
+    "codegen": "graphql-codegen --config codegen.yml",
+    "lint-staged": "lint-staged"
   },
+  "lint-staged": {
+    "*.ts": "eslint"
+  },
+  "pre-commit": "lint-staged",
   "dependencies": {
     "@material-ui/core": "^4.9.11",
     "@material-ui/icons": "^4.9.1",
