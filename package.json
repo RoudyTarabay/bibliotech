@@ -14,8 +14,9 @@
   },
   "pre-commit": "lint-staged",
   "dependencies": {
-    "@material-ui/core": "^4.9.11",
+    "@material-ui/core": "^4.11.0",
     "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.56",
     "apollo-cache-inmemory": "^1.6.6",
     "apollo-link-http": "^1.5.17",
     "babel-plugin-styled-components": "^1.10.7",
@@ -38,6 +39,7 @@
     "@typescript-eslint/eslint-plugin": "^3.6.1",
     "@typescript-eslint/parser": "^3.5.0",
     "apollo-client": "^2.6.10",
+    "eslint-plugin-react": "^7.20.3",
     "graphql-tag": "^2.10.3",
     "react-apollo": "^3.1.5",
     "typescript": "^3.9.6"
