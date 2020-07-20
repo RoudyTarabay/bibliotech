@@ -1,20 +1,15 @@
-import {
-  TextField,
-  Container,
-  Paper,
-  createGenerateClassName,
-} from "@material-ui/core";
+import React from "react";
+import { TextField, Container, Paper } from "@material-ui/core";
+
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Logo, Facebook } from "../components/Icons";
 import { Typography, Button } from "@material-ui/core";
 import { useState, useEffect } from "react";
-import { useQuery } from "@apollo/react-hooks";
+import useMutationWrapper from "../hooks/useMutationWrapper";
 import gql from "graphql-tag";
-import { useApolloClient, useMutation } from "@apollo/react-hooks";
+import * as Types from "../generated/graphql";
 
-import * as Types from "../src/generated/graphql";
-
-import classes from "*.module.css";
+// import classes from "*.module.css";
 // import theme from "../hooks/theme";
 declare global {
   interface Window {
@@ -22,7 +17,11 @@ declare global {
     fbAsyncInit: any;
   }
 }
-
+interface SignupState {
+  email: string;
+  password: string;
+  cpassword: string;
+}
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {},
@@ -62,6 +61,13 @@ const useStyles = makeStyles((theme: Theme) =>
         marginTop: theme.spacing(4),
         marginBottom: theme.spacing(4),
       },
+      "& .signup-login-switch": {
+        paddingTop: theme.spacing(2),
+        textAlign: "right",
+      },
+      "& .signup-login-switch a": {
+        cursor: "pointer",
+      },
     },
     logo: {
       maxWidth: "300px",
@@ -86,12 +92,11 @@ const _initFB = () => {
   };
 
   (function (d, s, id) {
-    var js,
-      fjs = d.getElementsByTagName(s)[0];
+    const fjs = d.getElementsByTagName(s)[0];
     if (d.getElementById(id)) {
       return;
     }
-    js = d.createElement(s);
+    const js = d.createElement(s);
     js.id = id;
     js.src = "https://connect.facebook.net/en_US/sdk.js";
     fjs.parentNode.insertBefore(js, fjs);
@@ -99,25 +104,27 @@ const _initFB = () => {
 };
 
 const SIGNUP = gql`
-  query signup($email: String, $password: String, $cpassword: string) {
-    registerUser(email: $email, passowrd: $password, cpassword: $cpassword) {
+  mutation signup($email: String!, $password: String!, $cpassword: String!) {
+    registerUser(email: $email, password: $password, cpassword: $cpassword) {
       success
       message
     }
   }
 `;
-export const LOGIN_USER = gql`
+const LOGIN = gql`
   mutation login($email: String!, $password: String!) {
-    login(email: $email, password: $password)
+    login(email: $email, password: $password) {
+      success
+    }
   }
 `;
 const loginToFb = () => {
   window.FB.login(function (response) {
     if (response.status === "connected") {
-      console.log("connected");
+      // console.log("connected");
       // Logged into your webpage and Facebook.
     } else {
-      console.log("not connected");
+      // console.log("not connected");
       // The person is not logged into your webpage or we are unable to tell.
     }
   });
@@ -127,18 +134,52 @@ const loginToFb = () => {
 //   window.FB.getLoginStatus(function(response) {
 //   }
 // }
-export default function SignUp() {
+const CredentialsPage: React.FC = () => {
+  const [formData, setFormData] = useState<SignupState>({
+    email: null,
+    password: null,
+    cpassword: null,
+  });
+  const [isLoginForm, setIsLoginForm] = useState(false);
+  const [
+    signup,
+    signupData,
+    signupErrorWrapper,
+    signupLoader,
+    signupSuccessComponent,
+  ] = useMutationWrapper<Types.SignupMutation, Types.SignupMutationVariables>({
+    gql: SIGNUP,
+    successText: "Signup Successful!",
+  });
+
+  const [
+    login,
+    loginData,
+    loginErrorWrapper,
+    loginLoader,
+    loginSuccessComponent,
+  ] = useMutationWrapper<Types.LoginMutation, Types.LoginMutationVariables>({
+    gql: LOGIN,
+    successText: "Login Successful!",
+  });
   useEffect(() => {
     _initFB();
   }, []);
-  const [login, { data }] = useMutation<Types.login, Types.loginVariables>(
-    LOGIN_USER
-  );
-
   const classes = useStyles();
-
+  const _onChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const _switchForm = () => {
+    setFormData({ email: null, password: null, cpassword: null });
+    setIsLoginForm(!isLoginForm);
+  };
+  const _onSignUp = () => {
+    signup({ variables: { ...formData } });
+  };
   return (
     <div className={classes.wrapper}>
+      {signupErrorWrapper.errorComponent}
+      {signupSuccessComponent}
       <Container className={classes.root} maxWidth="sm">
         <Paper elevation={3} className={classes.paper}>
           <Logo className={classes.logo} />
@@ -156,26 +197,79 @@ export default function SignUp() {
             </Button>
           </div>
           <Typography variant="subtitle2">OR</Typography>
-          <form className={classes.form}>
-            <div>
-              <TextField id="email" label="Email" variant="outlined" />
-            </div>
-            <div>
-              <TextField id="password" label="Password" variant="outlined" />
-            </div>
-            <div>
-              <TextField
-                id="confirm-password"
-                label="Confirm Password"
-                variant="outlined"
-              />
-            </div>
-            <Button variant="contained" color="primary">
-              Sign Up
-            </Button>
-          </form>
+          {isLoginForm ? (
+            <form className={classes.form}>
+              <div>
+                <TextField
+                  id="email"
+                  name="email"
+                  label="Email"
+                  variant="outlined"
+                  onChange={_onChange}
+                />
+              </div>
+              <div>
+                <TextField
+                  id="password"
+                  name="password"
+                  label="Password"
+                  variant="outlined"
+                  onChange={_onChange}
+                />
+              </div>
+
+              <Button variant="contained" color="primary" onClick={_onSignUp}>
+                {loginLoader} Login
+              </Button>
+            </form>
+          ) : (
+            <form className={classes.form}>
+              <div>
+                <TextField
+                  id="email"
+                  name="email"
+                  label="Email"
+                  variant="outlined"
+                  onChange={_onChange}
+                />
+              </div>
+              <div>
+                <TextField
+                  id="password"
+                  name="password"
+                  label="Password"
+                  variant="outlined"
+                  onChange={_onChange}
+                />
+              </div>
+              <div>
+                <TextField
+                  id="confirm-password"
+                  name="cpassword"
+                  label="Confirm Password"
+                  variant="outlined"
+                  onChange={_onChange}
+                />
+              </div>
+              <Button variant="contained" color="primary" onClick={_onSignUp}>
+                {signupLoader} Sign Up
+              </Button>
+            </form>
+          )}
+          <div className="signup-login-switch">
+            {isLoginForm ? (
+              <Typography component="a" onClick={_switchForm}>
+                Not a member? Sign up.
+              </Typography>
+            ) : (
+              <Typography component="a" onClick={_switchForm}>
+                Alread a member? Login.
+              </Typography>
+            )}
+          </div>
         </Paper>
       </Container>
     </div>
   );
-}
+};
+export default CredentialsPage;
