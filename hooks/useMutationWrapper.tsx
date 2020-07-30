@@ -19,7 +19,14 @@ type ErrorWrapper = {
   error?: string;
   errorComponent?: React.ReactElement;
 };
-
+type HookReturn<A, B> = [
+  // (options?: MutationOptions<A, B>) => Promise<ExecutionResult<A>>,
+  any,
+  A | null,
+  ErrorWrapper | null,
+  React.ReactElement,
+  React.ReactElement
+];
 const CustomSnackbar = (props: CustomSnackbarProps) => {
   return (
     <Snackbar
@@ -42,8 +49,9 @@ const CustomSnackbar = (props: CustomSnackbarProps) => {
   );
 };
 
-const useMutationWrapper = <A, B>(props: HookProps) => {
+const useMutationWrapper = <A, B>(props: HookProps): HookReturn<A, B> => {
   const [mutation, { data, loading, error }] = useMutation<A, B>(props.gql);
+
   const [successVisibility, setSuccessVisibility] = useState(false);
   const [errorWrapper, setErrorWrapper] = useState<ErrorWrapper>({
     visibility: false,
@@ -74,24 +82,25 @@ const useMutationWrapper = <A, B>(props: HookProps) => {
       const methodName = Object.keys(data)[0];
       if (data[methodName].success) {
         props.successText ? setSuccessVisibility(true) : null;
-      } else {
-        setErrorWrapper({
-          visibility: true,
-          error: data[methodName].message,
-          errorComponent: (
-            <CustomSnackbar
-              open={true}
-              severity={"error"}
-              text={data[methodName].message}
-              onClose={() =>
-                setErrorWrapper({ ...errorWrapper, visibility: false })
-              }
-            />
-          ),
-        });
       }
+    } else if (error) {
+      const formattedError = error.message.replace("GraphQL error: ", "");
+      setErrorWrapper({
+        visibility: true,
+        error: formattedError,
+        errorComponent: (
+          <CustomSnackbar
+            open={true}
+            severity={"error"}
+            text={formattedError}
+            onClose={() =>
+              setErrorWrapper({ ...errorWrapper, visibility: false })
+            }
+          />
+        ),
+      });
     }
   }, [loading]);
-  return [mutation, data, errorWrapper, loader, successComponent] as const;
+  return [mutation, data, errorWrapper, loader, successComponent];
 };
 export default useMutationWrapper;
