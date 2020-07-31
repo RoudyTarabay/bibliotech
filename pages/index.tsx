@@ -1,5 +1,12 @@
 import React from "react";
-import { TextField, Container, Paper } from "@material-ui/core";
+import {
+  Input,
+  Container,
+  Paper,
+  IconButton,
+  InputAdornment,
+  InputLabel,
+} from "@material-ui/core";
 
 import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
 import { Logo, Facebook } from "../components/Icons";
@@ -8,20 +15,30 @@ import { useState, useEffect } from "react";
 import useMutationWrapper from "../hooks/useMutationWrapper";
 import gql from "graphql-tag";
 import * as Types from "../generated/graphql";
+import Visibility from "@material-ui/icons/Visibility";
+import VisibilityOff from "@material-ui/icons/VisibilityOff";
+import FormControl from "@material-ui/core/FormControl";
 
-// import classes from "*.module.css";
-// import theme from "../hooks/theme";
 declare global {
   interface Window {
     FB: any;
     fbAsyncInit: any;
   }
 }
-interface SignupState {
+type SignupState = {
   email: string;
   password: string;
   cpassword: string;
-}
+};
+type LoginState = {
+  email: string;
+  password: string;
+};
+type censoredState = {
+  signupPassword: boolean;
+  signupCPassword: boolean;
+  loginPassword: boolean;
+};
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {},
@@ -33,7 +50,7 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     form: {
       marginTop: theme.spacing(3),
-      "& .MuiTextField-root": {},
+      "& .MuiInput-root": {},
     },
 
     paper: {
@@ -43,10 +60,14 @@ const useStyles = makeStyles((theme: Theme) =>
       paddingRight: theme.spacing(4),
       textAlign: "center",
       margin: theme.spacing(5),
-      "& .MuiTextField-root": {
+      "& .MuiInput-root": {
         marginTop: theme.spacing(2),
         marginBottm: theme.spacing(2),
         width: "100%",
+      },
+      "& .MuiFormControl-root": {
+        width: "100%",
+        marginBottom: theme.spacing(2),
       },
       "& .MuiButton-root": {
         marginTop: theme.spacing(2),
@@ -135,12 +156,20 @@ const loginToFb = () => {
 //   }
 // }
 const CredentialsPage: React.FC = () => {
-  const [formData, setFormData] = useState<SignupState>({
-    email: null,
-    password: null,
-    cpassword: null,
+  const [signupFormData, setSignupFormData] = useState<
+    Types.SignupMutationVariables
+  >({
+    //holds the state of the signup form
+    email: "",
+    password: "",
+    cpassword: "",
   });
-  const [isLoginForm, setIsLoginForm] = useState(false);
+  const [loginFormData, setLoginFormData] = useState<LoginState>({
+    //holds the state of the login form
+    email: "",
+    password: "",
+  });
+  const [isLoginForm, setIsLoginForm] = useState(false); //switches interface between login and signup
   const [
     signup,
     signupData,
@@ -150,8 +179,7 @@ const CredentialsPage: React.FC = () => {
   ] = useMutationWrapper<Types.SignupMutation, Types.SignupMutationVariables>({
     gql: SIGNUP,
     successText: "Signup Successful!",
-  });
-
+  }); //handles signup graphql call, enables and disables the loader, handles success and error alerts
   const [
     login,
     loginData,
@@ -161,25 +189,46 @@ const CredentialsPage: React.FC = () => {
   ] = useMutationWrapper<Types.LoginMutation, Types.LoginMutationVariables>({
     gql: LOGIN,
     successText: "Login Successful!",
+  }); //handles login graphql call, enables and disables the loader, handles success and error alerts
+  const [censored, setCensored] = useState({
+    signupPassword: true,
+    signupCPassword: true,
+    loginPassword: true,
   });
   useEffect(() => {
     _initFB();
   }, []);
+
   const classes = useStyles();
-  const _onChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const _onSignupChange = (e): void => {
+    setSignupFormData({ ...signupFormData, [e.target.name]: e.target.value });
   };
-  const _switchForm = () => {
-    setFormData({ email: null, password: null, cpassword: null });
+  const _onLoginChange = (e): void => {
+    setLoginFormData({ ...loginFormData, [e.target.name]: e.target.value });
+  };
+
+  const _switchForm = (): void => {
+    //switches signup and login UI and clears form data on switch
+    setSignupFormData({ email: null, password: null, cpassword: null });
+    setLoginFormData({ email: null, password: null });
     setIsLoginForm(!isLoginForm);
   };
-  const _onSignUp = () => {
-    signup({ variables: { ...formData } });
+
+  const _onSignUp = (): void => {
+    signup({ variables: { ...signupFormData } });
+  };
+  const _onLogin = (): void => {
+    login({ variables: { ...loginFormData } });
+  };
+  const _toggleCensored = (e): void => {
+    setCensored({ ...censored, [e.target.name]: !censored[e.target.name] });
   };
   return (
     <div className={classes.wrapper}>
       {signupErrorWrapper.errorComponent}
       {signupSuccessComponent}
+      {loginErrorWrapper.errorComponent}
+      {loginSuccessComponent}
       <Container className={classes.root} maxWidth="sm">
         <Paper elevation={3} className={classes.paper}>
           <Logo className={classes.logo} />
@@ -198,59 +247,108 @@ const CredentialsPage: React.FC = () => {
           </div>
           <Typography variant="subtitle2">OR</Typography>
           {isLoginForm ? (
-            <form className={classes.form}>
-              <div>
-                <TextField
-                  id="email"
+            <form className={classes.form} key={0}>
+              <FormControl>
+                <Input
                   name="email"
-                  label="Email"
-                  variant="outlined"
-                  onChange={_onChange}
+                  placeholder="Email"
+                  value={loginFormData.email}
+                  onChange={_onLoginChange}
                 />
-              </div>
-              <div>
-                <TextField
-                  id="password"
+              </FormControl>
+              <FormControl>
+                <InputLabel htmlFor="login-password">Password</InputLabel>
+                <Input
+                  id="login-password"
+                  type={censored.loginPassword ? "password" : "text"}
                   name="password"
-                  label="Password"
-                  variant="outlined"
-                  onChange={_onChange}
+                  value={loginFormData.password}
+                  onChange={_onLoginChange}
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
+                        name="signupPassword"
+                        onClick={_toggleCensored}
+                      >
+                        {censored.signupPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
+                      </IconButton>
+                    </InputAdornment>
+                  }
                 />
-              </div>
+              </FormControl>
 
-              <Button variant="contained" color="primary" onClick={_onSignUp}>
+              <Button variant="contained" color="primary" onClick={_onLogin}>
                 {loginLoader} Login
               </Button>
             </form>
           ) : (
-            <form className={classes.form}>
-              <div>
-                <TextField
-                  id="email"
+            <form className={classes.form} key={1}>
+              <FormControl>
+                <InputLabel htmlFor="signup-email">Email</InputLabel>
+                <Input
+                  id="signup-email"
                   name="email"
-                  label="Email"
-                  variant="outlined"
-                  onChange={_onChange}
+                  value={signupFormData.email}
+                  onChange={_onSignupChange}
                 />
-              </div>
-              <div>
-                <TextField
-                  id="password"
+              </FormControl>
+              <FormControl>
+                <InputLabel htmlFor="signup-password">Password</InputLabel>
+                <Input
+                  id="signup-password"
+                  type={censored.signupPassword ? "password" : "text"}
                   name="password"
-                  label="Password"
-                  variant="outlined"
-                  onChange={_onChange}
+                  value={signupFormData.password}
+                  onChange={_onSignupChange}
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
+                        name="signupPassword"
+                        aria-label="toggle password visibility"
+                        onClick={_toggleCensored}
+                      >
+                        {censored.signupPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
+                      </IconButton>
+                    </InputAdornment>
+                  }
                 />
-              </div>
-              <div>
-                <TextField
-                  id="confirm-password"
+              </FormControl>
+
+              <FormControl>
+                <InputLabel htmlFor="signup-password">
+                  Confirm Password
+                </InputLabel>
+
+                <Input
+                  type={censored.signupCPassword ? "password" : "text"}
                   name="cpassword"
-                  label="Confirm Password"
-                  variant="outlined"
-                  onChange={_onChange}
+                  value={signupFormData.cpassword}
+                  onChange={_onSignupChange}
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
+                        name="signupCPassword"
+                        aria-label="toggle password visibility"
+                        onClick={_toggleCensored}
+                      >
+                        {censored.signupCPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
+                      </IconButton>
+                    </InputAdornment>
+                  }
                 />
-              </div>
+              </FormControl>
               <Button variant="contained" color="primary" onClick={_onSignUp}>
                 {signupLoader} Sign Up
               </Button>
