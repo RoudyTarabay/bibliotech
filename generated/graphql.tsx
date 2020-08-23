@@ -41,6 +41,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   registerUser?: Maybe<MutationResponse>;
   login?: Maybe<MutationResponse>;
+  continueWithFacebook?: Maybe<MutationResponse>;
 };
 
 
@@ -54,6 +55,11 @@ export type MutationRegisterUserArgs = {
 export type MutationLoginArgs = {
   email?: Maybe<Scalars['String']>;
   password?: Maybe<Scalars['String']>;
+};
+
+
+export type MutationContinueWithFacebookArgs = {
+  facebookId?: Maybe<Scalars['String']>;
 };
 
 export enum CacheControlScope {
@@ -87,7 +93,20 @@ export type LoginMutation = (
   { __typename?: 'Mutation' }
   & { login?: Maybe<(
     { __typename?: 'MutationResponse' }
-    & Pick<MutationResponse, 'success'>
+    & Pick<MutationResponse, 'success' | 'id'>
+  )> }
+);
+
+export type ContinueWithFacebookMutationVariables = Exact<{
+  facebookId: Scalars['String'];
+}>;
+
+
+export type ContinueWithFacebookMutation = (
+  { __typename?: 'Mutation' }
+  & { continueWithFacebook?: Maybe<(
+    { __typename?: 'MutationResponse' }
+    & Pick<MutationResponse, 'success' | 'id'>
   )> }
 );
 
@@ -126,6 +145,7 @@ export const LoginDocument = gql`
     mutation login($email: String!, $password: String!) {
   login(email: $email, password: $password) {
     success
+    id
   }
 }
     `;
@@ -151,3 +171,33 @@ export function withLogin<TProps, TChildProps = {}, TDataName extends string = '
 };
 export type LoginMutationResult = ApolloReactCommon.MutationResult<LoginMutation>;
 export type LoginMutationOptions = ApolloReactCommon.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
+export const ContinueWithFacebookDocument = gql`
+    mutation continueWithFacebook($facebookId: String!) {
+  continueWithFacebook(facebookId: $facebookId) {
+    success
+    id
+  }
+}
+    `;
+export type ContinueWithFacebookMutationFn = ApolloReactCommon.MutationFunction<ContinueWithFacebookMutation, ContinueWithFacebookMutationVariables>;
+export type ContinueWithFacebookComponentProps = Omit<ApolloReactComponents.MutationComponentOptions<ContinueWithFacebookMutation, ContinueWithFacebookMutationVariables>, 'mutation'>;
+
+    export const ContinueWithFacebookComponent = (props: ContinueWithFacebookComponentProps) => (
+      <ApolloReactComponents.Mutation<ContinueWithFacebookMutation, ContinueWithFacebookMutationVariables> mutation={ContinueWithFacebookDocument} {...props} />
+    );
+    
+export type ContinueWithFacebookProps<TChildProps = {}, TDataName extends string = 'mutate'> = {
+      [key in TDataName]: ApolloReactCommon.MutationFunction<ContinueWithFacebookMutation, ContinueWithFacebookMutationVariables>
+    } & TChildProps;
+export function withContinueWithFacebook<TProps, TChildProps = {}, TDataName extends string = 'mutate'>(operationOptions?: ApolloReactHoc.OperationOption<
+  TProps,
+  ContinueWithFacebookMutation,
+  ContinueWithFacebookMutationVariables,
+  ContinueWithFacebookProps<TChildProps, TDataName>>) {
+    return ApolloReactHoc.withMutation<TProps, ContinueWithFacebookMutation, ContinueWithFacebookMutationVariables, ContinueWithFacebookProps<TChildProps, TDataName>>(ContinueWithFacebookDocument, {
+      alias: 'continueWithFacebook',
+      ...operationOptions
+    });
+};
+export type ContinueWithFacebookMutationResult = ApolloReactCommon.MutationResult<ContinueWithFacebookMutation>;
+export type ContinueWithFacebookMutationOptions = ApolloReactCommon.BaseMutationOptions<ContinueWithFacebookMutation, ContinueWithFacebookMutationVariables>;

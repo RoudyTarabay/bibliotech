@@ -8,14 +8,14 @@ import "typeface-roboto";
 import indigo from "@material-ui/core/colors/indigo";
 import red from "@material-ui/core/colors/red";
 import Head from "next/head";
-import React from "react";
+import React, { useState } from "react";
 import { createMuiTheme } from "@material-ui/core/styles";
-
 import { ApolloClient } from "apollo-client";
 import { InMemoryCache, NormalizedCacheObject } from "apollo-cache-inmemory";
 import { createHttpLink } from "apollo-link-http";
 import { ApolloProvider } from "@apollo/react-hooks";
-function MyApp({ Component, pageProps }: AppProps) {
+import AuthContext from "../contexts/authContext";
+const MyApp = ({ Component, pageProps }: AppProps): React.ReactElement => {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const theme = createMuiTheme({
     palette: {
@@ -29,6 +29,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     uri: "http://localhost:4000/",
     fetch: fetch,
   });
+  const [id, setId] = useState(null);
   const client: ApolloClient<NormalizedCacheObject> = new ApolloClient({
     cache,
     link,
@@ -52,20 +53,22 @@ function MyApp({ Component, pageProps }: AppProps) {
       </Head>
       <ApolloProvider client={client}>
         <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <Component {...pageProps} />
-          <style global jsx>{`
-             {
-              body {
-                min-height: 100vh;
+          <AuthContext.Provider value={{ id, setId }}>
+            <CssBaseline />
+            <Component {...pageProps} />
+            <style global jsx>{`
+               {
+                body {
+                  min-height: 100vh;
+                }
               }
-            }
-          `}</style>
+            `}</style>
+          </AuthContext.Provider>
         </ThemeProvider>
       </ApolloProvider>
     </React.Fragment>
   );
-}
+};
 // Only uncomment this method if you have blocking data requirements for
 // every single page in your application. This disables the ability to
 // perform automatic static optimization, causing every page in your app to
@@ -77,4 +80,5 @@ function MyApp({ Component, pageProps }: AppProps) {
 //
 //   return { ...appProps }
 // }
+export {};
 export default MyApp;

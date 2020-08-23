@@ -18,6 +18,7 @@ import * as Types from "../generated/graphql";
 import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
 import FormControl from "@material-ui/core/FormControl";
+import AuthContext from "../contexts/authContext";
 
 declare global {
   interface Window {
@@ -117,7 +118,7 @@ const _initFB = () => {
     if (d.getElementById(id)) {
       return;
     }
-    const js = d.createElement(s);
+    const js = d.createElement(s) as HTMLInputElement;
     js.id = id;
     js.src = "https://connect.facebook.net/en_US/sdk.js";
     fjs.parentNode.insertBefore(js, fjs);
@@ -136,21 +137,19 @@ const LOGIN = gql`
   mutation login($email: String!, $password: String!) {
     login(email: $email, password: $password) {
       success
+      id
     }
   }
 `;
-const loginToFb = () => {
-  window.FB.login(function (response) {
-    if (response.status === "connected") {
-      // console.log("connected");
-      // Logged into your webpage and Facebook.
-    } else {
-      // console.log("not connected");
-      // The person is not logged into your webpage or we are unable to tell.
+const LOGIN_FACEBOOK = gql`
+  mutation continueWithFacebook($facebookId: String!) {
+    continueWithFacebook(facebookId: $facebookId) {
+      success
+      id
     }
-  });
-  //launches facebook login dialog
-};
+  }
+`;
+
 // const isLoggedIn=()=>{//checks if the user is already logged in
 //   window.FB.getLoginStatus(function(response) {
 //   }
@@ -190,16 +189,58 @@ const CredentialsPage: React.FC = () => {
     gql: LOGIN,
     successText: "Login Successful!",
   }); //handles login graphql call, enables and disables the loader, handles success and error alerts
+  const [
+    continueWithFacebook,
+    continueWithFacebookData,
+    continueWithFacebookErrorWrapper,
+    continueWithFacebookLoader,
+    continueWithFacebookSuccessComponent,
+  ] = useMutationWrapper<
+    Types.ContinueWithFacebookMutation,
+    Types.ContinueWithFacebookMutationVariables
+  >({
+    gql: LOGIN_FACEBOOK,
+    successText: "Login Successful!",
+  }); //handles login graphql call, enables and disables the loader, handles success and error alerts
   const [censored, setCensored] = useState({
     signupPassword: true,
     signupCPassword: true,
     loginPassword: true,
   });
+  const { id, setId } = React.useContext(AuthContext);
+
   useEffect(() => {
     _initFB();
   }, []);
-
+  useEffect(() => {
+    if (loginData) {
+      setId(loginData.login.id);
+    }
+  }, [loginData]);
+  useEffect(() => {
+    if (continueWithFacebookData) {
+      setId(continueWithFacebookData.login.id);
+    }
+  }, [continueWithFacebookData]);
   const classes = useStyles();
+  const loginToFb = () => {
+    window.FB.login(function (response) {
+      if (response.status === "connected") {
+        console.log("1");
+        continueWithFacebook({
+          variables: { facebookId: response.authResponse.userID + "" },
+        });
+
+        continueWithFacebook(response.authResponse.userID + "");
+        // Logged into your webpage and Facebook.
+      } else {
+        console.log("not connected", response);
+
+        // The person is not logged into your webpage or we are unable to tell.
+      }
+    });
+    //launches facebook login dialog
+  };
   const _onSignupChange = (e): void => {
     setSignupFormData({ ...signupFormData, [e.target.name]: e.target.value });
   };
